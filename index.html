@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Practice Grid Layout</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #e8eef3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+    }
+
+    .grid-wrapper {
+      background: white;
+      border: 2px solid #999;
+      padding: 28px 36px 36px;
+      width: 92%;
+      max-width: 980px;
+    }
+
+    h2 {
+      text-align: center;
+      text-decoration: underline;
+      font-size: 1.35rem;
+      margin-bottom: 18px;
+      color: #111;
+      font-weight: normal;
+    }
+
+    /*
+      APPROACH: Use a 6-column grid (LCM of 2 and 3 = 6).
+      This lets us divide evenly for:
+        - Box 1 = 2 cols
+        - Boxes 2,3,4,5,6 area = 2 cols (middle)
+        - Boxes 7,8 area = 2 cols (right)
+        - Boxes 10a, 10b = 1 col each (equal halves of left area)
+        - Boxes 11,12,13 = need thirds of left 2 cols... still fractional.
+
+      BETTER: Use 12 columns. For 4,5,6 (4 cols ÷ 3) and 11,12 (under 3 cols ÷ 2),
+      use SUBGRID on the parent cell so children inherit grid lines.
+
+      CLEANEST FIX: Use a single flat 12-col grid but place 4,5,6 as a 
+      nested grid with grid-template-columns: repeat(3, 1fr) and crucially
+      set the wrapper to have NO gap interference and overflow:hidden so
+      it perfectly matches its grid area height.
+    */
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: 65px 65px 65px 65px 70px 70px 70px;
+      gap: 3px;
+      background: #555; /* gap color */
+    }
+
+    .cell {
+      padding: 5px 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      color: #222;
+    }
+
+    /* ── Box 1: Yellow, col 1-4, row 1-4 ── */
+    .b1 {
+      background: #cfe000;
+      grid-column: 1 / 5;
+      grid-row: 1 / 5;
+    }
+
+    /* ── Box 2: Orange, col 5-8, row 1 ── */
+    .b2 {
+      background: #e8920a;
+      grid-column: 5 / 9;
+      grid-row: 1 / 2;
+    }
+
+    /* ── Box 3: Yellow, col 5-8, row 2 ── */
+    .b3 {
+      background: #cfe000;
+      grid-column: 5 / 9;
+      grid-row: 2 / 3;
+    }
+
+    /*
+      Boxes 4, 5, 6 — col 5-8 (4 cols), row 3.
+      They must be EQUAL width and FULL height of row 3.
+      
+      FIX: Place a wrapper div at col 5-9, row 3.
+      Give it display:grid with 3 equal columns.
+      Set gap same as outer gap (3px).
+      The wrapper itself IS the grid item — it naturally
+      takes the full height of the row. Children fill it via grid.
+    */
+    .b456-wrapper {
+      grid-column: 5 / 9;
+      grid-row: 3 / 4;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      /* The wrapper must have no padding so children touch edges */
+      padding: 0;
+      /* background shows as gap between children */
+      background: #555;
+    }
+
+    .b456-wrapper .cell {
+      /* No need for height:100% — grid children stretch by default */
+    }
+
+    /* ── Box 7: Red, col 9-12, row 1-2 ── */
+    .b7 {
+      background: #e03c2d;
+      grid-column: 9 / 13;
+      grid-row: 1 / 3;
+    }
+
+    /* ── Box 8: Dark Green, col 9-12, row 3-4 ── */
+    .b8 {
+      background: #4a7a3d;
+      grid-column: 9 / 13;
+      grid-row: 3 / 5;
+    }
+
+    /* ── BOTTOM SECTION ── */
+
+    /*
+      Both 10 boxes: EQUAL width, SAME height (row 5 only).
+      Col 1-6 split equally = 3 cols each.
+      10a: col 1-4, 10b: col 4-7
+    */
+    .b10a {
+      background: #cfe000;
+      grid-column: 1 / 4;
+      grid-row: 5 / 6;
+    }
+
+    .b10b {
+      background: #e8920a;
+      grid-column: 4 / 7;
+      grid-row: 5 / 6;  /* SAME row as 10a — NOT taller */
+    }
+
+    /*
+      11, 12, 13 — equal width, rows 6-7.
+      From image: 11 and 12 sit under yellow-10 (col 1-3),
+      13 sits under orange-10 (col 4-6).
+      For EQUAL thirds of col 1-6: 2 cols each.
+      11: col 1-3, 12: col 3-5, 13: col 5-7
+    */
+    .b11 {
+      background: #a8d8f0;
+      grid-column: 1 / 3;
+      grid-row: 6 / 8;
+    }
+
+    .b12 {
+      background: #a8d8f0;
+      grid-column: 3 / 5;
+      grid-row: 6 / 8;
+    }
+
+    .b13 {
+      background: #e8920a;
+      grid-column: 5 / 7;
+      grid-row: 6 / 8;
+    }
+
+    /* ── Box 14: Red, col 7-9, row 5-7 ── */
+    .b14 {
+      background: #e03c2d;
+      grid-column: 7 / 10;
+      grid-row: 5 / 8;
+    }
+
+    /* ── Box 15: Pink, col 10-12, row 5 ── */
+    .b15 {
+      background: #e49fc8;
+      grid-column: 10 / 13;
+      grid-row: 5 / 6;
+    }
+
+    /* ── Box 16: Yellow, col 10-12, row 6 ── */
+    .b16 {
+      background: #cfe000;
+      grid-column: 10 / 13;
+      grid-row: 6 / 7;
+    }
+
+    /* ── Box 17: Gray, col 10-12, row 7 ── */
+    .b17 {
+      background: #b8b8b8;
+      grid-column: 10 / 13;
+      grid-row: 7 / 8;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid-wrapper">
+    <h2>Practice Grid Layoud</h2>
+
+    <div class="grid">
+
+      <div class="cell b1">1</div>
+      <div class="cell b2">2</div>
+      <div class="cell b3">3</div>
+
+      <!-- 4, 5, 6: nested grid so all three are equal width AND full row height -->
+      <div class="b456-wrapper">
+        <div class="cell" style="background:#4a7a3d;">4</div>
+        <div class="cell" style="background:#7b7bd4;">5</div>
+        <div class="cell" style="background:#cfe000;">6</div>
+      </div>
+
+      <div class="cell b7">7</div>
+      <div class="cell b8">8</div>
+
+      <!-- Both 10 boxes: equal width, same height -->
+      <div class="cell b10a">10</div>
+      <div class="cell b10b">10</div>
+
+      <!-- 11, 12, 13: equal width -->
+      <div class="cell b11">11</div>
+      <div class="cell b12">12</div>
+      <div class="cell b13">13</div>
+
+      <div class="cell b14">14</div>
+      <div class="cell b15">15</div>
+      <div class="cell b16">16</div>
+      <div class="cell b17">17</div>
+
+    </div>
+  </div>
+</body>
+</html>
